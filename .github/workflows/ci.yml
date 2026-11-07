@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-and-test:
+    name: ${{ matrix.os }} / ${{ matrix.compiler }} / shared=${{ matrix.shared }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            version: '14'
+            shared: true
+          - os: ubuntu-latest
+            compiler: gcc
+            version: '15'
+            shared: true
+          - os: ubuntu-latest
+            compiler: intel
+            version: '2025.2'
+            shared: true
+          - os: ubuntu-latest
+            compiler: intel
+            version: '2026.2'
+            shared: true
+          - os: macos-latest
+            compiler: gcc
+            version: '14'
+            shared: true
+          - os: macos-latest
+            compiler: gcc
+            version: '15'
+            shared: true
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Fortran compiler
+        uses: fortran-lang/setup-fortran@v1
+        id: setup-fortran
+        with:
+          compiler: ${{ matrix.compiler }}
+          version: ${{ matrix.version }}
+
+      - name: Show Fortran compiler version
+        run: ${{ env.FC }} --version
+        env:
+          FC: ${{ steps.setup-fortran.outputs.fc }}
+          CC: ${{ steps.setup-fortran.outputs.cc }}
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          CMAKE_OPTIONS=(
+            -S .
+            -B build
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+            -DCMAKE_Fortran_COMPILER=${{ env.FC }}
+            -DCMAKE_C_COMPILER=${{ env.CC }}
+            -DBUILD_TESTING=TRUE
+            -DBUILD_SHARED_LIBS=${{ matrix.shared && 'TRUE' || 'FALSE' }}
+          )
+          cmake "${CMAKE_OPTIONS[@]}"
+        env:
+          FC: ${{ steps.setup-fortran.outputs.fc }}
+          CC: ${{ steps.setup-fortran.outputs.cc }}
+
+      - name: Build with CMake
+        run: cmake --build build
+
+      - name: Run tests
+        shell: bash
+        working-directory: build
+        run: ctest --output-on-failure
+
+      - name: Install with CMake
+        run: cmake --install build --prefix ${{ github.workspace }}/install --config ${{ env.BUILD_TYPE }}
+
+      - name: Verify install with CMake consumer
+        shell: bash
+        run: |
+          mkdir -p consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.20)
+          project(wpsim_io_consumer LANGUAGES Fortran)
+
+          find_package(wpsim_io CONFIG REQUIRED)
+
+          add_executable(wpsim_io_consumer main.f90)
+          target_link_libraries(wpsim_io_consumer PRIVATE wpsim_io::wpsim_io)
+          EOF
+
+          cat > consumer/main.f90 <<'EOF'
+          program main
+            use wpsim_io
+            print *, "wpsim_io package found"
+          end program main
+          EOF
+
+          CMAKE_OPTIONS=(
+            -S consumer
+            -B consumer/build
+            -DCMAKE_Fortran_COMPILER=${{ env.FC }}
+            -DCMAKE_C_COMPILER=${{ env.CC }}
+          )
+          INSTALL_PREFIX="${{ github.workspace }}/install"
+          CMAKE_OPTIONS+=( -DCMAKE_PREFIX_PATH="${INSTALL_PREFIX}" )
+          cmake "${CMAKE_OPTIONS[@]}"
+          cmake --build consumer/build
+        env:
+          FC: ${{ steps.setup-fortran.outputs.fc }}
+          CC: ${{ steps.setup-fortran.outputs.cc }}
