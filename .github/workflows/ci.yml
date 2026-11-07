@@ -124,3 +124,6 @@ jobs:
         env:
           FC: ${{ steps.setup-fortran.outputs.fc }}
           CC: ${{ steps.setup-fortran.outputs.cc }}
+
+      - name: Run consumer
+        run: consumer/build/wpsim_io_consumer
