@@ -154,8 +154,8 @@ By default, `create()` uses the filename prefix `FILE:`. The example therefore c
 The library accepts three-dimensional arrays through `wpsim_field3d`. Each vertical level is written as an individual two-dimensional record. Optional `levels` values specify the level metadata associated with each slice.
 
 ```fortran
-real :: data3d(nx, ny, nz)
-real :: levels(nz)
+real :: data3d(nx, ny, 4)
+real :: levels(4)
 
 levels = [1000.0, 925.0, 850.0, 700.0]
 field3d = wpsim_field3d("TT", date, data3d, levels)
@@ -187,32 +187,32 @@ When generating WPS Intermediate files with this library, make sure the input re
 
 ### Three-dimensional atmospheric fields
 
-| Intermediate field name | Units | Description | Requirement / alternative |
-|---|---|---|---|
-| `TT` | K | 3-D air temperature | Required |
-| `RH` | % | 3-D relative humidity | Required unless 3-D `SPECHUMD` is provided |
-| `SPECHUMD` | kg kg-1 | 3-D specific humidity | Required unless 3-D `RH` is provided |
-| `UU` | m s-1 | 3-D U-component of wind | Required |
-| `VV` | m s-1 | 3-D V-component of wind | Required |
-| `GHT` | m | 3-D geopotential height | Required |
-| `PRESSURE` | Pa | 3-D pressure | Required for non-isobaric datasets |
+| Intermediate field name | Units   | Description             | Requirement / alternative                    |
+| ----------------------- | ------- | ----------------------- | -------------------------------------------- |
+| `TT`                  | K       | 3-D air temperature     | Required                                     |
+| `RH`                  | %       | 3-D relative humidity   | Required unless 3-D `SPECHUMD` is provided |
+| `SPECHUMD`            | kg kg-1 | 3-D specific humidity   | Required unless 3-D `RH` is provided       |
+| `UU`                  | m s-1   | 3-D U-component of wind | Required                                     |
+| `VV`                  | m s-1   | 3-D V-component of wind | Required                                     |
+| `GHT`                 | m       | 3-D geopotential height | Required                                     |
+| `PRESSURE`            | Pa      | 3-D pressure            | Required for non-isobaric datasets           |
 
 For isobaric datasets, pressure is represented by the pressure-level metadata associated with each field record; the additional 3-D `PRESSURE` field is only required by the guide for non-isobaric datasets.
 
 ### Surface and near-surface fields
 
-| Intermediate field name | Units | Description | Requirement / alternative |
-|---|---|---|---|
-| `PSFC` | Pa | Surface pressure | Required |
-| `PMSL` | Pa | Mean sea-level pressure | Required |
-| `SKINTEMP` | K | Skin temperature | Required |
-| `SOILHGT` | m | Soil height | Required |
-| `TT` | K | 2-m air temperature | Required |
-| `RH` | % | 2-m relative humidity | Required unless 2-m `SPECHUMD` is provided |
-| `SPECHUMD` | kg kg-1 | 2-m specific humidity | Required unless 2-m `RH` is provided |
-| `UU` | m s-1 | 10-m U-component of wind | Required |
-| `VV` | m s-1 | 10-m V-component of wind | Required |
-| `LANDSEA` | fraction | Land-sea mask (0=water, 1=land) | Required |
+| Intermediate field name | Units    | Description                     | Requirement / alternative                    |
+| ----------------------- | -------- | ------------------------------- | -------------------------------------------- |
+| `PSFC`                | Pa       | Surface pressure                | Required                                     |
+| `PMSL`                | Pa       | Mean sea-level pressure         | Required                                     |
+| `SKINTEMP`            | K        | Skin temperature                | Required                                     |
+| `SOILHGT`             | m        | Soil height                     | Required                                     |
+| `TT`                  | K        | 2-m air temperature             | Required                                     |
+| `RH`                  | %        | 2-m relative humidity           | Required unless 2-m `SPECHUMD` is provided |
+| `SPECHUMD`            | kg kg-1  | 2-m specific humidity           | Required unless 2-m `RH` is provided       |
+| `UU`                  | m s-1    | 10-m U-component of wind        | Required                                     |
+| `VV`                  | m s-1    | 10-m V-component of wind        | Required                                     |
+| `LANDSEA`             | fraction | Land-sea mask (0=water, 1=land) | Required                                     |
 
 Note that the same intermediate field names can be used for different vertical or surface levels. For example, `TT` is used for both 3-D air temperature and 2-m air temperature. The level metadata (`xlvl`) distinguishes the surface/near-surface record from atmospheric levels.
 
@@ -220,12 +220,12 @@ Note that the same intermediate field names can be used for different vertical o
 
 The guide lists two alternative naming conventions for soil moisture and soil temperature:
 
-| Intermediate field name pattern | Units | Description | Requirement / alternative |
-|---|---|---|---|
-| `SMtttbbb` | m3 m-3 | Soil moisture for a layer | Preferred layer-based form |
-| `STtttbbb` | K | Soil temperature for a layer | Preferred layer-based form |
-| `SOILMmmm` | kg m-3 | Soil moisture at a depth | Alternative to `SMtttbbb` |
-| `SOILTmmm` | K | Soil temperature at a depth | Alternative to `STtttbbb` |
+| Intermediate field name pattern | Units  | Description                  | Requirement / alternative   |
+| ------------------------------- | ------ | ---------------------------- | --------------------------- |
+| `SMtttbbb`                    | m3 m-3 | Soil moisture for a layer    | Preferred layer-based form  |
+| `STtttbbb`                    | K      | Soil temperature for a layer | Preferred layer-based form  |
+| `SOILMmmm`                    | kg m-3 | Soil moisture at a depth     | Alternative to `SMtttbbb` |
+| `SOILTmmm`                    | K      | Soil temperature at a depth  | Alternative to `STtttbbb` |
 
 In `SMtttbbb` and `STtttbbb`, `ttt` is the top depth and `bbb` is the bottom depth of the soil layer, both in centimeters. In `SOILMmmm` and `SOILTmmm`, `mmm` is the soil depth in centimeters. The depth/layer convention and the fields supplied must be consistent with the land-surface scheme and the WRF configuration.
 
@@ -245,11 +245,11 @@ The fields listed here are the WRF Users Guide's minimum meteorological input se
 
 ### Important implementation note: field names and metadata
 
-The WRF Users Guide names the 3-D geopotential-height field `GHT`. The current library's built-in 3-D field metadata defaults recognize `HGT`; therefore, when writing the WPS-required `GHT` field, pass `HGT` instead. For example:
+The WRF Users' Guide names the 3-D geopotential-height field `GHT`. This naming convention has also been incorrectly adopted by many other libraries that process WPS intermediate files. However, the correct variable name is `HGT`, as specified by the metgrid name for Height in the WPS GFS variable table ([Vtable.GFS](https://github.com/wrf-model/WPS/blob/master/ungrib/Variable_Tables/Vtable.GFS)). Therefore, when writing a geopotential height field, `HGT` hould be passed as the field name. For example:
 
 ```fortran
 field3d = wpsim_field3d( &
-    "GHT", date, height_data, pressure_levels
+    "HGT", date, height_data, pressure_levels &
 )
 call im_file%write(proj, field3d)
 ```
@@ -271,13 +271,13 @@ Similarly, Surface and near-surface fields or soil fields should be created with
 
 The projection type is constructed with `wpsim_proj`. The `iproj` values currently supported by the library are:
 
-| `iproj` | Projection | Main projection parameters |
-|---:|---|---|
-| 0 | Latitude/longitude | `startlat`, `startlon`, `deltalat`, `deltalon` |
-| 1 | Mercator | `startlat`, `startlon`, `dx`, `dy`, `truelat1` |
-| 3 | Lambert conformal | `startlat`, `startlon`, `dx`, `dy`, `xlonc`, `truelat1`, `truelat2` |
-| 4 | Gaussian | `startlat`, `startlon`, `nlats`, `deltalon` |
-| 5 | Polar stereographic | `startlat`, `startlon`, `xlonc`, `truelat1` |
+| `iproj` | Projection          | Main projection parameters                                                        |
+| --------: | ------------------- | --------------------------------------------------------------------------------- |
+|         0 | Latitude/longitude  | `startlat`, `startlon`, `deltalat`, `deltalon`                            |
+|         1 | Mercator            | `startlat`, `startlon`, `dx`, `dy`, `truelat1`                          |
+|         3 | Lambert conformal   | `startlat`, `startlon`, `dx`, `dy`, `xlonc`, `truelat1`, `truelat2` |
+|         4 | Gaussian            | `startlat`, `startlon`, `nlats`, `deltalon`                               |
+|         5 | Polar stereographic | `startlat`, `startlon`, `xlonc`, `truelat1`                               |
 
 Optional projection arguments include `earth_rad`, `is_wind_grid_rel`, and `startloc`. The default Earth radius is 6371.229 km, wind-grid-relative is false, and the start location is `SWCORNER`.
 
@@ -285,13 +285,13 @@ Optional projection arguments include `earth_rad`, `is_wind_grid_rel`, and `star
 
 The public umbrella module is `wpsim_io`.
 
-| Type | Purpose | Main procedures / constructors |
-|---|---|---|
-| `wpsim_file` | File lifecycle and record I/O | `create()`, `open()`, `read()`, `write()`, `print()`, `close()` |
-| `wpsim_proj` | Grid projection metadata | `wpsim_proj(...)` |
-| `wpsim_field2d` | A two-dimensional field | `wpsim_field2d(...)` |
-| `wpsim_field3d` | A field with multiple vertical levels | `wpsim_field3d(...)`, `tofields()` |
-| `wpsim_field3d_soil` | A field with multiple soil layers | `wpsim_field3d_soil(...)`, `tofields()` |
+| Type                   | Purpose                               | Main procedures / constructors                                              |
+| ---------------------- | ------------------------------------- | --------------------------------------------------------------------------- |
+| `wpsim_file`         | File lifecycle and record I/O         | `create()`, `open()`, `read()`, `write()`, `print()`, `close()` |
+| `wpsim_proj`         | Grid projection metadata              | `wpsim_proj(...)`                                                         |
+| `wpsim_field2d`      | A two-dimensional field               | `wpsim_field2d(...)`                                                      |
+| `wpsim_field3d`      | A field with multiple vertical levels | `wpsim_field3d(...)`, `tofields()`                                      |
+| `wpsim_field3d_soil` | A field with multiple soil layers     | `wpsim_field3d_soil(...)`, `tofields()`                                 |
 
 A file can be opened for reading by supplying either a complete `file` path or a `dir`, `date`, and optional `prefix`. For writing, use `create()` with the same argument conventions. The default prefix is `FILE:`.
 
