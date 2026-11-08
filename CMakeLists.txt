@@ -21,6 +21,7 @@ option(BUILD_SHARED_LIBS "Whether shared libraries should be built" TRUE)
 
 # Collect source of the project
 add_subdirectory("src")
+add_subdirectory("utils")
 
 if(BUILD_TESTING)
   add_subdirectory("examples")
