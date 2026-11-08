@@ -47,7 +47,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Fortran compiler
         uses: fortran-lang/setup-fortran@v1

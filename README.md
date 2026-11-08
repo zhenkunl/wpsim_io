@@ -23,6 +23,7 @@ The library can be used to prepare meteorological input files for the WRF Prepro
 - Provides an object-oriented API based on Fortran derived types and type-bound procedures.
 - Handles the format's big-endian representation through compiler-specific options configured by CMake.
 - Provides CMake build, install, and package-export support.
+- Includes the `wpsim_dump` command-line utility for inspecting WPS Intermediate files.
 
 ## Requirements
 
@@ -64,7 +65,7 @@ Install the library to a chosen prefix:
 cmake --install build --prefix /path/to/install
 ```
 
-The installation includes the library, the Fortran module file, and CMake package configuration files.
+The installation includes the library, Fortran module files, CMake package configuration files, and the `wpsim_dump` utility (installed to `bin/`).
 
 A CMake project can then locate and link the installed package:
 
@@ -89,6 +90,33 @@ use wpsim_io
 ```
 
 ## Usage
+
+### Inspect an intermediate file with `wpsim_dump`
+
+`wpsim_dump` is a command-line utility that reads a WPS Intermediate Format file and prints its field-record summaries. It is built together with the library and installed to the `bin/` directory.
+
+```bash
+# Print all fields in the file
+wpsim_dump data/FILE:2013-08-11_00
+
+# Print only the first 5 fields
+wpsim_dump data/FILE:2013-08-11_00 5
+```
+
+The command-line syntax is:
+
+```text
+wpsim_dump <filename> [n]
+```
+
+- `filename`: Path to an existing WPS Intermediate Format file.
+- `n` (optional): Positive integer specifying the maximum number of fields to print. If omitted, all fields are printed.
+
+After installation, run it from the installation prefix, for example:
+
+```bash
+/path/to/install/bin/wpsim_dump data/FILE:2013-08-11_00
+```
 
 ### Read an intermediate file
 
@@ -304,6 +332,10 @@ The `examples/` directory contains:
 - `read_wpsim_example.F90`: reads and prints records from the sample file in `data/`.
 - `write_wpsim_example.F90`: writes 2-D, 3-D, and soil-layer fields to an intermediate file.
 
+The `utils/` directory contains:
+
+- `wpsim_dump.F90`: command-line utility for printing field-record summaries from an intermediate file.
+
 Build and run the examples with CTest:
 
 ```bash
@@ -324,12 +356,14 @@ wpsim_io/
 ├── cmake/       # Compiler settings and CMake package configuration
 ├── data/        # Sample WPS Intermediate Format file
 ├── examples/    # Read and write examples
-└── src/         # Fortran library source
-    ├── wpsim_constants.F90
-    ├── wpsim_projection.F90
-    ├── wpsim_fields.F90
-    ├── wpsim_files.F90
-    └── wpsim_io.F90
+├── src/         # Fortran library source
+│   ├── wpsim_constants.F90
+│   ├── wpsim_projection.F90
+│   ├── wpsim_fields.F90
+│   ├── wpsim_files.F90
+│   └── wpsim_io.F90
+└── utils/       # Command-line utilities
+    └── wpsim_dump.F90
 ```
 
 ## Format and compatibility notes
