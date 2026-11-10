@@ -170,8 +170,8 @@ contains
     do while (.true.)
       write(*, *) record_link_pointer%record
       record_link_pointer => record_link_pointer%next
-      if (.not. associated(record_link_pointer%next) .or. i > limit) exit
       i = i + 1
+      if (.not. associated(record_link_pointer%next) .or. i > limit) exit
     end do
 
   end subroutine print_records

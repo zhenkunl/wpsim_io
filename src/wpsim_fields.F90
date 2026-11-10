@@ -3,7 +3,7 @@ module wpsim_fields
   use wpsim_projection
 
   implicit none
-  private
+  ! private ! NOTE: an issue "Unable to resolve user defined io" arise when using write(*, *) in other modules
   public :: wpsim_field
   public :: wpsim_field2d
   public :: wpsim_field3d
