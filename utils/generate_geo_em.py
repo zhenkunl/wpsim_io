@@ -71,10 +71,10 @@ for j in range(ny):
 
 # Soil categories
 num_soil_cat = 16
-soilctop = np.ones((ny, nx), dtype=np.float32)
-soilcbot = np.ones((ny, nx), dtype=np.float32)
-soilctop[landmask == 0] = 14.0
-soilcbot[landmask == 0] = 14.0
+soilctop = np.ones((num_soil_cat, ny, nx), dtype=np.float32)
+soilcbot = np.ones((num_soil_cat, ny, nx), dtype=np.float32)
+soilctop[:, landmask == 0] = 14.0
+soilcbot[:, landmask == 0] = 14.0
 
 # Monthly fields
 month = 12
@@ -282,14 +282,14 @@ with Dataset(OUTPUT, "w", format="NETCDF4") as ds:
     )
     add_var(
         ds, "SOILCTOP",
-        ("Time", "south_north", "west_east"),
-        soilctop[None, :, :],
+        ("Time", "soil_cat", "south_north", "west_east"),
+        soilctop[None, :, :, :],
         "category", "Top-layer soil type"
     )
     add_var(
         ds, "SOILCBOT",
-        ("Time", "south_north", "west_east"),
-        soilcbot[None, :, :],
+        ("Time", "soil_cat", "south_north", "west_east"),
+        soilcbot[None, :, :, :],
         "category", "Bottom-layer soil type"
     )
 
@@ -331,56 +331,56 @@ with Dataset(OUTPUT, "w", format="NETCDF4") as ds:
     # -----------------------------------------------------
     attrs = {
         "TITLE": "Synthetic geo_em file for wpsim_io testing",
-        "START_DATE": start_date,
         "SIMULATION_START_DATE": start_date,
 
-        "WEST-EAST_GRID_DIMENSION": nx + 1,
-        "SOUTH-NORTH_GRID_DIMENSION": ny + 1,
-        "BOTTOM-TOP_GRID_DIMENSION": 1,
+        "WEST-EAST_GRID_DIMENSION": np.int32(nx + 1),
+        "SOUTH-NORTH_GRID_DIMENSION": np.int32(ny + 1),
+        "BOTTOM-TOP_GRID_DIMENSION": np.int32(0),
 
-        "WEST-EAST_PATCH_START_UNSTAG": 1,
-        "WEST-EAST_PATCH_END_UNSTAG": nx,
-        "WEST-EAST_PATCH_START_STAG": 1,
-        "WEST-EAST_PATCH_END_STAG": nx + 1,
+        "WEST-EAST_PATCH_START_UNSTAG": np.int32(1),
+        "WEST-EAST_PATCH_END_UNSTAG": np.int32(nx),
+        "WEST-EAST_PATCH_START_STAG": np.int32(1),
+        "WEST-EAST_PATCH_END_STAG": np.int32(nx + 1),
 
-        "SOUTH-NORTH_PATCH_START_UNSTAG": 1,
-        "SOUTH-NORTH_PATCH_END_UNSTAG": ny,
-        "SOUTH-NORTH_PATCH_START_STAG": 1,
-        "SOUTH-NORTH_PATCH_END_STAG": ny + 1,
+        "SOUTH-NORTH_PATCH_START_UNSTAG": np.int32(1),
+        "SOUTH-NORTH_PATCH_END_UNSTAG": np.int32(ny),
+        "SOUTH-NORTH_PATCH_START_STAG": np.int32(1),
+        "SOUTH-NORTH_PATCH_END_STAG": np.int32(ny + 1),
 
         "GRIDTYPE": "C",
-        "DX": dx,
-        "DY": dy,
+        "DX": np.float32(dx),
+        "DY": np.float32(dy),
+        "DYN_OPT": np.int32(2),
 
-        "CEN_LAT": ref_lat,
-        "CEN_LON": ref_lon,
-        "MOAD_CEN_LAT": ref_lat,
+        "CEN_LAT": np.float32(ref_lat),
+        "CEN_LON": np.float32(ref_lon),
 
-        "TRUELAT1": ref_lat,
-        "TRUELAT2": ref_lat,
-        "STAND_LON": ref_lon,
+        "TRUELAT1": np.float32(ref_lat),
+        "TRUELAT2": np.float32(ref_lat),
+        "MOAD_CEN_LAT": np.float32(ref_lat),
+        "STAND_LON": np.float32(ref_lon),
 
-        "POLE_LAT": 90.0,
-        "POLE_LON": 0.0,
+        "POLE_LAT": np.float32(90.0),
+        "POLE_LON": np.float32(0.0),
 
-        "MAP_PROJ": 6,
+        "MAP_PROJ": np.int32(6),
         "MMINLU": "MODIFIED_IGBP_MODIS_NOAH",
-        "NUM_LAND_CAT": num_land_cat,
+        "NUM_LAND_CAT": np.int32(num_land_cat),
 
-        "ISWATER": 17,
-        "ISLAKE": 21,
-        "ISICE": 15,
-        "ISURBAN": 13,
-        "ISOILWATER": 14,
+        "ISWATER": np.int32(17),
+        "ISLAKE": np.int32(21),
+        "ISICE": np.int32(15),
+        "ISURBAN": np.int32(13),
+        "ISOILWATER": np.int32(14),
 
-        "grid_id": 1,
-        "parent_id": 1,
-        "i_parent_start": 1,
-        "j_parent_start": 1,
-        "parent_grid_ratio": 1,
+        "grid_id": np.int32(1),
+        "parent_id": np.int32(1),
+        "i_parent_start": np.int32(1),
+        "j_parent_start": np.int32(1),
 
-        "i_parent_end": nx,
-        "j_parent_end": ny,
+        "i_parent_end": np.int32(nx + 1),
+        "j_parent_end": np.int32(ny + 1),
+        "parent_grid_ratio": np.int32(1),
     }
 
     for key, value in attrs.items():
