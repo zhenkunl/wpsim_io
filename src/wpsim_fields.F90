@@ -451,42 +451,37 @@ contains
     implicit none
     class(wpsim_record), intent(in)    :: self
     integer, intent(in)                :: iunit
-    
-    type(wpsim_proj)                   :: proj
-    type(wpsim_field2d)                :: field
+
     integer                            :: iostat
 
-    proj  = self%proj
-    field = self%field
-
-    write(unit=iunit, iostat=iostat) field%version
+    write(unit=iunit, iostat=iostat) self%field%version
     if (iostat /= 0) then
       error stop 'ERROR: can not write format version to WPS intermediate format file!'
     endif
 
-    write(iunit, iostat=iostat) field%hdate, field%xfcst, field%map_source, field%field, &
-                                field%units, field%desc, field%xlvl, field%nx, field%ny, &
-                                proj%iproj
+    write(iunit, iostat=iostat) self%field%hdate, self%field%xfcst, self%field%map_source, self%field%field,      &
+                                self%field%units, self%field%desc, self%field%xlvl, self%field%nx, self%field%ny, &
+                                self%proj%iproj
     if (iostat /= 0) then
       error stop 'ERROR: can not write metadata to WPS intermediate format file!'
     end if
 
-    if (proj%iproj == IPROJ_LATLON) then ! Cylindrical equidistant (lat/lon)
-      write(iunit, iostat=iostat) proj%startloc, proj%startlat, proj%startlon,       &
-                                  proj%deltalat, proj%deltalon, proj%earth_radius
-    else if (proj%iproj == IPROJ_MERCATOR) then ! Mercator
-      write(iunit, iostat=iostat) proj%startloc, proj%startlat, proj%startlon,       &
-                                  proj%dx, proj%dy, proj%truelat1, proj%earth_radius
-    else if (proj%iproj == IPROJ_LAMBERT_CONFORMAL) then ! Lambert conformal
-      write(iunit, iostat=iostat) proj%startloc, proj%startlat, proj%startlon,       &
-                                  proj%dx, proj%dy, proj%xlonc, proj%truelat1,       &
-                                  proj%truelat2, proj%earth_radius
-    else if (proj%iproj == IPROJ_GAUSSIAN) then ! Gaussian
-      write(iunit, iostat=iostat) proj%startloc, proj%startlat, proj%startlon,       &
-                                  proj%nlats, proj%deltalon, proj%earth_radius
-    else if (proj%iproj == IPROJ_POLAR_STEREOGRAPHIC) then ! Polar stereographic
-      write(iunit, iostat=iostat) proj%startloc, proj%startlat, proj%startlon,       &
-                                  proj%xlonc, proj%truelat1, proj%earth_radius
+    if (self%proj%iproj == IPROJ_LATLON) then ! Cylindrical equidistant (lat/lon)
+      write(iunit, iostat=iostat) self%proj%startloc, self%proj%startlat, self%proj%startlon,           &
+                                  self%proj%deltalat, self%proj%deltalon, self%proj%earth_radius
+    else if (self%proj%iproj == IPROJ_MERCATOR) then ! Mercator
+      write(iunit, iostat=iostat) self%proj%startloc, self%proj%startlat, self%proj%startlon,           &
+                                  self%proj%dx, self%proj%dy, self%proj%truelat1, self%proj%earth_radius
+    else if (self%proj%iproj == IPROJ_LAMBERT_CONFORMAL) then ! Lambert conformal
+      write(iunit, iostat=iostat) self%proj%startloc, self%proj%startlat, self%proj%startlon,           &
+                                  self%proj%dx, self%proj%dy, self%proj%xlonc, self%proj%truelat1,      &
+                                  self%proj%truelat2, self%proj%earth_radius
+    else if (self%proj%iproj == IPROJ_GAUSSIAN) then ! Gaussian
+      write(iunit, iostat=iostat) self%proj%startloc, self%proj%startlat, self%proj%startlon,           &
+                                  self%proj%nlats, self%proj%deltalon, self%proj%earth_radius
+    else if (self%proj%iproj == IPROJ_POLAR_STEREOGRAPHIC) then ! Polar stereographic
+      write(iunit, iostat=iostat) self%proj%startloc, self%proj%startlat, self%proj%startlon,           &
+                                  self%proj%xlonc, self%proj%truelat1, self%proj%earth_radius
     else
       error stop 'ERROR: unsupported map projection!'
     end if
@@ -494,13 +489,13 @@ contains
       error stop 'ERROR: can not write map projection to WPS intermediate format file!'
     end if
 
-    write(iunit, iostat=iostat) proj%is_wind_grid_rel
+    write(iunit, iostat=iostat) self%proj%is_wind_grid_rel
     if (iostat /= 0) then
       error stop 'ERROR: can not write wind rotation flag to WPS intermediate format file!'
     end if
 
     ! Write 2-d array of data
-    write(iunit, iostat=iostat) field%slab
+    write(iunit, iostat=iostat) self%field%slab
     if (iostat /= 0) then
       error stop 'ERROR: can not write slab data to WPS intermediate format file!'
     end if
@@ -517,52 +512,46 @@ contains
     integer, intent(out)            :: iostat    !< IO status code.
     character(len=*), intent(inout) :: iomsg     !< IO status message.
 
-    type(wpsim_proj)                :: proj
-    type(wpsim_field2d)             :: field
-
-    proj  = self%proj
-    field = self%field
-
     write(unit, *, iostat=iostat) '================================================', new_line('A')
-    write(unit, *, iostat=iostat) ' FIELD = ', trim(field%field), new_line('A')
-    write(unit, *, iostat=iostat) ' UNITS = ', trim(field%units), ' DESCRIPTION = ', trim(field%desc), new_line('A')
-    write(unit, *, iostat=iostat) ' DATE = ', trim(field%hdate), ' FCST = ', field%xfcst, new_line('A')
-    write(unit, *, iostat=iostat) ' SOURCE = ', trim(field%map_source), new_line('A')
-    write(unit, *, iostat=iostat) ' LEVEL = ', field%xlvl, new_line('A')
-    write(unit, *, iostat=iostat) ' I,J DIMS = ', field%nx, field%ny, new_line('A')
-    if (proj%iproj == IPROJ_LATLON) then ! Cylindrical equidistant (lat/lon)
-      write(unit, *, iostat=iostat) ' IPROJ = ', proj%iproj, ' PROJECTION = LAT LON', new_line('A')
+    write(unit, *, iostat=iostat) ' FIELD = ', trim(self%field%field), new_line('A')
+    write(unit, *, iostat=iostat) ' UNITS = ', trim(self%field%units), ' DESCRIPTION = ', trim(self%field%desc), new_line('A')
+    write(unit, *, iostat=iostat) ' DATE = ', trim(self%field%hdate), ' FCST = ', self%field%xfcst, new_line('A')
+    write(unit, *, iostat=iostat) ' SOURCE = ', trim(self%field%map_source), new_line('A')
+    write(unit, *, iostat=iostat) ' LEVEL = ', self%field%xlvl, new_line('A')
+    write(unit, *, iostat=iostat) ' I,J DIMS = ', self%field%nx, self%field%ny, new_line('A')
+    if (self%proj%iproj == IPROJ_LATLON) then ! Cylindrical equidistant (lat/lon)
+      write(unit, *, iostat=iostat) ' IPROJ = ', self%proj%iproj, ' PROJECTION = LAT LON', new_line('A')
       write(unit, *, iostat=iostat) '   REF_X, REF_Y = ', 1.0, 1.0, new_line('A')
-      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', proj%startlat, proj%startlon, new_line('A')
-      write(unit, *, iostat=iostat) '   DLAT, DLON = ', proj%deltalat, proj%deltalon, new_line('A')
-    else if (proj%iproj == IPROJ_MERCATOR) then ! Mercator
-      write(unit, *, iostat=iostat) ' IPROJ = ', proj%iproj, ' PROJECTION = MERCATOR', new_line('A')
+      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', self%proj%startlat, self%proj%startlon, new_line('A')
+      write(unit, *, iostat=iostat) '   DLAT, DLON = ', self%proj%deltalat, self%proj%deltalon, new_line('A')
+    else if (self%proj%iproj == IPROJ_MERCATOR) then ! Mercator
+      write(unit, *, iostat=iostat) ' IPROJ = ', self%proj%iproj, ' PROJECTION = MERCATOR', new_line('A')
       write(unit, *, iostat=iostat) '   REF_X, REF_Y = ', 1.0, 1.0, new_line('A')
-      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', proj%startlat, proj%startlon, new_line('A')
-      write(unit, *, iostat=iostat) '   DX, DY = ', proj%dx, proj%dy, new_line('A')
-      write(unit, *, iostat=iostat) '   TRUELAT1 = ', proj%truelat1, new_line('A')
-    else if (proj%iproj == IPROJ_LAMBERT_CONFORMAL) then ! Lambert conformal
-      write(unit, *, iostat=iostat) ' IPROJ = ', proj%iproj, ' PROJECTION = LAMBERT', new_line('A')
+      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', self%proj%startlat, self%proj%startlon, new_line('A')
+      write(unit, *, iostat=iostat) '   DX, DY = ', self%proj%dx, self%proj%dy, new_line('A')
+      write(unit, *, iostat=iostat) '   TRUELAT1 = ', self%proj%truelat1, new_line('A')
+    else if (self%proj%iproj == IPROJ_LAMBERT_CONFORMAL) then ! Lambert conformal
+      write(unit, *, iostat=iostat) ' IPROJ = ', self%proj%iproj, ' PROJECTION = LAMBERT', new_line('A')
       write(unit, *, iostat=iostat) '   REF_X, REF_Y = ', 1.0, 1.0, new_line('A')
-      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', proj%startlat, proj%startlon, new_line('A')
-      write(unit, *, iostat=iostat) '   DX, DY = ', proj%dx, proj%dy, new_line('A')
-      write(unit, *, iostat=iostat) '   XLONC = ', proj%xlonc, new_line('A')
-      write(unit, *, iostat=iostat) '   TRUELAT1 = ', proj%truelat1, new_line('A')
-      write(unit, *, iostat=iostat) '   TRUELAT2 = ', proj%truelat2, new_line('A')
-    else if (proj%iproj == IPROJ_GAUSSIAN) then ! Gaussian
-      write(unit, *, iostat=iostat) ' IPROJ = ', proj%iproj, ' PROJECTION = GAUSSIAN', new_line('A')
+      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', self%proj%startlat, self%proj%startlon, new_line('A')
+      write(unit, *, iostat=iostat) '   DX, DY = ', self%proj%dx, self%proj%dy, new_line('A')
+      write(unit, *, iostat=iostat) '   XLONC = ', self%proj%xlonc, new_line('A')
+      write(unit, *, iostat=iostat) '   TRUELAT1 = ', self%proj%truelat1, new_line('A')
+      write(unit, *, iostat=iostat) '   TRUELAT2 = ', self%proj%truelat2, new_line('A')
+    else if (self%proj%iproj == IPROJ_GAUSSIAN) then ! Gaussian
+      write(unit, *, iostat=iostat) ' IPROJ = ', self%proj%iproj, ' PROJECTION = GAUSSIAN', new_line('A')
       write(unit, *, iostat=iostat) '   REF_X, REF_Y = ', 1.0, 1.0, new_line('A')
-      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', proj%startlat, proj%startlon, new_line('A')
-      write(unit, *, iostat=iostat) '   NLATS = ', proj%nlats, new_line('A')
-    else if (proj%iproj == IPROJ_POLAR_STEREOGRAPHIC) then ! Polar stereographic
-      write(unit, *, iostat=iostat) ' IPROJ = ', proj%iproj, ' PROJECTION = POLAR STEREOGRAPHIC', new_line('A')
+      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', self%proj%startlat, self%proj%startlon, new_line('A')
+      write(unit, *, iostat=iostat) '   NLATS = ', self%proj%nlats, new_line('A')
+    else if (self%proj%iproj == IPROJ_POLAR_STEREOGRAPHIC) then ! Polar stereographic
+      write(unit, *, iostat=iostat) ' IPROJ = ', self%proj%iproj, ' PROJECTION = POLAR STEREOGRAPHIC', new_line('A')
       write(unit, *, iostat=iostat) '   REF_X, REF_Y = ', 1.0, 1.0, new_line('A')
-      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', proj%startlat, proj%startlon, new_line('A')
-      write(unit, *, iostat=iostat) '   XLONC = ', proj%xlonc, new_line('A')
-      write(unit, *, iostat=iostat) '   TRUELAT1 = ', proj%truelat1, new_line('A')
+      write(unit, *, iostat=iostat) '   REF_LAT, REF_LON = ', self%proj%startlat, self%proj%startlon, new_line('A')
+      write(unit, *, iostat=iostat) '   XLONC = ', self%proj%xlonc, new_line('A')
+      write(unit, *, iostat=iostat) '   TRUELAT1 = ', self%proj%truelat1, new_line('A')
     end if
-    write(unit, *, iostat=iostat) '   EARTH_RADIUS = ', proj%earth_radius, new_line('A')
-    write(unit, *, iostat=iostat) ' DATA(1,1) = ', field%slab(1, 1), new_line('A')
+    write(unit, *, iostat=iostat) '   EARTH_RADIUS = ', self%proj%earth_radius, new_line('A')
+    write(unit, *, iostat=iostat) ' DATA(1,1) = ', self%field%slab(1, 1), new_line('A')
 
   end subroutine write_formatted
 
